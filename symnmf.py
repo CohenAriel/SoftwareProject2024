@@ -23,7 +23,7 @@ def print_matrix(matrix):
 match goal:
     case 'symnmf':
         W = norm(X)
-        H = np.random.uniform(0, 2 * (np.mean(W)/k)^0.5)
+        H = np.random.uniform(0, 2 * (np.mean(W)/k)^0.5, (len(X), k))
         H = symnmf(H, W)
         print_matrix(H)
     case 'sym':
