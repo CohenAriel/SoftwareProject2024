@@ -1,7 +1,7 @@
-# define PY_SSIZE_T_CLEAN
-# include <Python.h>
-# include "symnmf.h"
+#include <Python.h>
+#include "symnmf.h"
 
+// Extracts a 2D array from a Python object
 double **extract_2d_array(PyObject *PyX) {
     double **X;
     int n, d, i, j;
@@ -10,22 +10,23 @@ double **extract_2d_array(PyObject *PyX) {
     n = PyObject_Length(PyX);
     d = PyObject_Length(PyList_GetItem(PyX, 0));
 
+    // Allocate memory for the 2D array
     X = (double **) malloc(n * sizeof(double *));
     for (i = 0; i < n; i++) {
         X[i] = (double *) malloc(d * sizeof(double));
         row = PyList_GetItem(PyX, i);
         for (j = 0; j < d; j++){
             element = PyList_GetItem(row, j);
-            //Py_INCREF(element); I'm not sure if this is needed. Try uncommenting if there is a memory leak. Otherwise delete this line.
+            // Convert Python object to double
             X[i][j] = PyFloat_AsDouble(element);
         }
     }
     return X;
 }
 
+// Gets arguments and extracts 2D array
 double **get_arg(PyObject *args) {
     PyObject *PyX;
-    int len;
 
     if (!PyArg_ParseTuple(args, "O", &PyX)) {
         return NULL;
@@ -34,6 +35,7 @@ double **get_arg(PyObject *args) {
     return extract_2d_array(PyX);
 }
 
+// Creates a Python 2D list from a 2D array
 PyObject *create_2d_list(double** arr) {
     PyObject *row;
     int  i, j;
@@ -45,13 +47,16 @@ PyObject *create_2d_list(double** arr) {
         row = PyList_New(n);
 
         for (j = 0; j < dim; j++) {
+            // Convert double to Python object
             PyObject *elem = Py_BuildValue("d", arr[i][j]);
             PyList_SetItem(row, j, elem);
         }
         PyList_SetItem(PyOut, i, row);
     }
+    return PyOut;
 }
 
+// Frees memory allocated for a 2D array
 void free_2d_array(double **arr) {
     int i;
     int n = sizeof(arr) / sizeof(arr[0]);
@@ -61,62 +66,77 @@ void free_2d_array(double **arr) {
     free(arr);
 }
 
+// Python binding for sym function
 static PyObject *sym_py(PyObject *self, PyObject *args) {
+    // Extract input arguments
     double **X = get_arg(args);
+    // Calculate sym matrix
     double **A = sym(X);
-
+    // Convert result to Python object
     PyObject *PyOut = create_2d_list(A);
-
+    // Free memory
     free_2d_array(X);
     free_2d_array(A);
 
     return PyOut;
 }
 
+// Python binding for ddg function
 static PyObject *ddg_py(PyObject *self, PyObject *args) {
+    // Extract input arguments
     double **X = get_arg(args);
+    // Calculate ddg matrix
     double **D = ddg(X);
-
+    // Convert result to Python object
     PyObject *PyOut = create_2d_list(D);
-
+    // Free memory
     free_2d_array(X);
     free_2d_array(D);
 
     return PyOut;
 }
 
+// Python binding for norm function
 static PyObject *norm_py(PyObject *self, PyObject *args) {
+    // Extract input arguments
     double **X = get_arg(args);
+    // Calculate norm matrix
     double **W = norm(X);
-
+    // Convert result to Python object
     PyObject *PyOut = create_2d_list(W);
-
+    // Free memory
     free_2d_array(X);
     free_2d_array(W);
 
     return PyOut;
 }
 
+// Python binding for symnmf function
 static PyObject *symnmf_py(PyObject *self, PyObject *args) {
-    PyObject *PyX, *PyW, *PyH;
+    PyObject *PyW, *PyH;
     double **W, **H;
 
+    // Extract input arguments
     if (!PyArg_ParseTuple(args, "OO", &PyW, &PyH)) {
         return NULL;
     }
     W = extract_2d_array(PyW);
     H = extract_2d_array(PyH);
 
+    // Calculate symnmf
     H = symnmf(H, W);
 
+    // Convert result to Python object
     PyObject *PyOut = create_2d_list(H);
 
+    // Free memory
     free_2d_array(W);
     free_2d_array(H);
 
     return PyOut;
 }
 
+// Method definitions for the Python module
 static PyMethodDef symnmfMethods[] = {
     {"sym",
       (PyCFunction) sym_py,
@@ -141,6 +161,7 @@ static PyMethodDef symnmfMethods[] = {
     {NULL, NULL, 0, NULL}
 };
 
+// Module definition
 static struct PyModuleDef symnmfmodule = {
     PyModuleDef_HEAD_INIT,
     "symnmf",
