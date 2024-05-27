@@ -1,5 +1,6 @@
-#include <Python.h>
-#include "symnmf.h"
+# define PY_SSIZE_T_CLEAN
+# include <Python.h>
+# include "symnmf.h"
 
 // Extracts a 2D array from a Python object
 double **extract_2d_array(PyObject *PyX) {
