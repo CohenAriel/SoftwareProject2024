@@ -1,5 +1,6 @@
 import sys
 import numpy as np
+import symnmfmodule
 
 np.random.seed(0)
 
@@ -8,7 +9,7 @@ goal = sys.argv[2]
 file_name = sys.argv[3]
 
 # Load the data in the file
-X = np.loadtxt(file_name)
+X = np.loadtxt(file_name, delimiter=',')
 
 def print_matrix(matrix):
     for line in matrix:
@@ -19,21 +20,21 @@ def print_matrix(matrix):
 # ii. sym: Calculate and output the similarity matrix as described in 1.1.
 # iii. ddg: Calculate and output the Diagonal Degree Matrix as described in 1.2
 # iv. norm: Calculate and output the normalized similarity matrix as described in 1.3.
-match goal:
-    case 'symnmf':
-        W = norm(X)
-        H = np.random.uniform(0, 2 * (np.mean(W)/k)^0.5, (len(X), k))
-        H = symnmf(H, W)
-        print_matrix(H)
-    case 'sym':
-        A = sym(X)
-        print_matrix(A)
-    case 'ddg':
-        D = ddg(X)
-        print_matrix(D)
-    case 'norm':
-        W = norm(X)
-        print_matrix(W)
-    case _:
-        print('An Error Has Occurred')
-        sys.exit(1)
+
+if goal == 'symnmf':
+    W = symnmfmodule.norm(X)
+    H = np.random.uniform(0, 2 * (np.mean(W)/k)^0.5, (len(X), k))
+    H = symnmfmodule.symnmf(H, W)
+    print_matrix(H)
+elif goal == 'sym':
+    A = symnmfmodule.sym(X)
+    print_matrix(A)
+elif goal == 'ddg':
+    D = symnmfmodule.ddg(X)
+    print_matrix(D)
+elif goal == 'norm':
+    W = symnmfmodule.norm(X)
+    print_matrix(W)
+else:
+    print('An Error Has Occurred')
+    sys.exit(1)

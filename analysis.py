@@ -2,19 +2,19 @@ import sys
 import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
-import symnmf
+import symnmfmodule
 
 def print_silhouette_score(label, score):
     print(f'{label}: {score:.4f}')
 
 def load_data(file_name):
-    return np.loadtxt(file_name)
+    return np.loadtxt(file_name, delimiter=',')
 
 def symnmf_clustering(X, k):
-    W = symnmf.norm(X.tolist())
+    W = symnmfmodule.norm(X.tolist())
     m = np.mean(W)
     H = np.random.uniform(0, 2 * (m / k)**0.5, (len(X), k))
-    H = symnmf.symnmf(W, H.tolist())
+    H = symnmfmodule.symnmf(W, H.tolist())
     clusters = np.argmax(H, axis=1)
     return clusters
 
