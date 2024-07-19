@@ -45,7 +45,7 @@ PyObject *create_2d_list(double** arr, int n, int m) {
     PyObject *PyOut = PyList_New(n);
 
     for (i = 0; i < n; i++) {
-        row = PyList_New(n);
+        row = PyList_New(m);
 
         for (j = 0; j < m; j++) {
             /*Convert double to Python object*/
@@ -112,26 +112,22 @@ static PyObject *norm_py(PyObject *self, PyObject *args) {
 /* Python binding for symnmf function */
 static PyObject *symnmf_py(PyObject *self, PyObject *args) {
     PyObject *PyW, *PyH;
-    double **W, **H;
+    double **W, **H, **new_H;
 
     /* Extract input arguments */
-    if (!PyArg_ParseTuple(args, "OO", &PyW, &PyH)) {
+    if (!PyArg_ParseTuple(args, "OO", &PyH, &PyW)) {
         return NULL;
     }
-    int n, d, k;
-    W = extract_2d_array(PyW, &n, &d);
+    int n, k, d;
     H = extract_2d_array(PyH, &n, &k);
-
+    W = extract_2d_array(PyW, &n, &d);
     /* Calculate symnmf */
-    H = symnmf(H, W, n, k);
-
+    new_H = symnmf(H, W, n, k);
     /* Convert result to Python object */
-    PyObject *PyOut = create_2d_list(H, n, d);
-
+    PyObject *PyOut = create_2d_list(new_H, n, k);
     /* Free memory */
     free_2d_array(W, n);
-    free_2d_array(H, n);
-
+    free_2d_array(new_H, n);
     return PyOut;
 }
 

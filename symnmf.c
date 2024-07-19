@@ -47,16 +47,16 @@ float distance(double* x , double* y , int n) {
 /*  Calculate the symmetric matrix.
     Accepts the input X and the number of vectors n as arguments */
 double **sym(double **X, int n, int d) {
-    double **A = alloc_2d_array(n, n);
     int i,j;
+    double **A = alloc_2d_array(n, n);
     for (i = 0; i < n; i++) {
         for (j = 0; j < n; j++) {
             if (i == j) {
                 A[i][j] = 0;
-                continue;
+            } else {
+                A[i][j] = distance(X[i], X[j], d);
+                A[i][j] = exp(-A[i][j]/2);
             }
-            A[i][j] = distance(X[i], X[j], d);
-            A[i][j] = exp(-A[i][j]/2);
         }
     }
     return A;
@@ -82,25 +82,26 @@ double **ddg(double **A, int n) {
 /*  Calculate the norm matrix.
     Accepts the similarity matrix A and the number of vectors n as arguments */
 double **norm(double **A, int n) {
-    int i;
+    int i, j;
     double **W = alloc_2d_array(n, n);
     double **D = ddg(A, n);
-    double **D_norm = alloc_2d_array(n, n);
+
     for (i = 0; i < n; i++) {
-        D_norm[i][i] = 1 / sqrt(D[i][i]);
+        D[i][i] = 1 / sqrt(D[i][i]);
+    }
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            W[i][j] = D[i][i] * A[i][j] * D[j][j];
+        }
     }
 
-    /* D is used here temporarily for calculations*/
-    matmul(D_norm, A, D, n, n, n);
-    matmul(D, D_norm, W, n, n, n);
-
     free_2d_array(D, n);
-    free_2d_array(D_norm, n);
     return W;
 }
 
 /*  Calculate the symmetric non-negative matrix factorization.
-    Accepts the matrices H and W and the number of vectors n and the required number of clusters k as arguments */
+    Accepts the matrices H and W and the number of vectors n and the required number of clusters k as arguments.
+    Frees H */
 double **symnmf(double **H , double **W, int n, int k) {
     int i, j, l, m;
 
@@ -110,7 +111,7 @@ double **symnmf(double **H , double **W, int n, int k) {
         double **numerators = alloc_2d_array(n, k);
         double **temp_denominators = alloc_2d_array(n, n); /*To calculate HH^T*/
         double **denominators = alloc_2d_array(n, k);
-
+        
         matmul(W, H, numerators, n, n, k);
         /* Multiply H with H^T */
         for (j = 0; j < n; j++) {
@@ -148,7 +149,7 @@ double **symnmf(double **H , double **W, int n, int k) {
             break;
         }
 
-        /*free_2d_array(H, n);*/
+        free_2d_array(H, n);
         H = new_H;
     }
 
@@ -159,7 +160,7 @@ void print_2D_array(double **arr, int n, int m) {
     int i, j;
     for (i = 0; i < n; i++) {
         for (j = 0; j < m; j++) {
-            printf("%.4f ", arr[i][j]);
+            printf("%.4f", arr[i][j]);
             if (j != m-1) printf(",");
         }
         printf("\n");
@@ -171,26 +172,38 @@ double **get_matrix_from_file(char *filename, int *n, int *d) {
     char ch;
     int i, j;
     double **X;
-    double t;
+    double temp;
 
     file = fopen(filename, "r");
 
     /* Find number of vectors and dimension */
     *n = 0;
     *d = 0;
-    while ((ch = fscanf(file, "%lf", &t)) != EOF) {
-        (*d)++;
-        if (ch == '\n') {
+    while (fscanf(file, "%lf", &temp) != EOF) {
+        ch = fgetc(file);
+        if (*n == 0) {
+            (*d)++;
+        }
+        if (ch == '\n' || ch == EOF) {
             (*n)++;
-            (*d) = 0;
         }
     }
+    rewind(file);
 
+    i = 0;
+    j = 0;
     X = alloc_2d_array(*n, *d);
     /* Read file */
-    for (i = 0; i < *n; i++) {
-        for (j = 0; j < *d; j++) {
-            if (fscanf(file, "%lf", &X[i][j])) {};
+    while (fscanf(file, "%lf", &temp) != EOF) {
+        X[i][j] = temp;
+        ch = fgetc(file);
+        j++;
+        if (ch == '\n') {
+            i++;
+            j = 0;
+        } else if (ch == EOF) {
+            i++;
+            break;
         }
     }
 
