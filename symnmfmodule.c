@@ -123,7 +123,7 @@ static PyObject *symnmf_py(PyObject *self, PyObject *args) {
     H = extract_2d_array(PyH, &n, &k);
 
     /* Calculate symnmf */
-    H = symnmf(H, W, n, d);
+    H = symnmf(H, W, n, k);
 
     /* Convert result to Python object */
     PyObject *PyOut = create_2d_list(H, n, d);

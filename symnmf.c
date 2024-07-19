@@ -102,24 +102,26 @@ double **norm(double **A, int n) {
 /*  Calculate the symmetric non-negative matrix factorization.
     Accepts the matrices H and W and the number of vectors n and the required number of clusters k as arguments */
 double **symnmf(double **H , double **W, int n, int k) {
-    int i, j, l , m;
+    int i, j, l, m;
 
     for (i = 0; i < 300; i++) {
-        double norm;
+        double f_norm;
         double** new_H = alloc_2d_array(n, k);
         double **numerators = alloc_2d_array(n, k);
+        double **temp_denominators = alloc_2d_array(n, n); /*To calculate HH^T*/
         double **denominators = alloc_2d_array(n, k);
 
         matmul(W, H, numerators, n, n, k);
         /* Multiply H with H^T */
         for (j = 0; j < n; j++) {
             for (l = 0; l < n; l++) {
-                denominators[j][l] = 0;
+                temp_denominators[j][l] = 0;
                 for (m = 0; m < k; m++) {
-                    denominators[j][l] += H[j][m] * H[l][m];
+                    temp_denominators[j][l] += H[j][m] * H[l][m];
                 }
             }
         }
+        matmul(temp_denominators, H, denominators, n, n, k);
 
         /* Element-wise operations*/
         for (j = 0; j < n; j++) {
@@ -130,23 +132,24 @@ double **symnmf(double **H , double **W, int n, int k) {
         }
 
         free_2d_array(numerators, n);
+        free_2d_array(temp_denominators, n);
         free_2d_array(denominators, n);
 
         /* Calculate the Frobenius norm of the difference between H and new_H*/
-        norm = 0;
+        f_norm = 0;
         for (j = 0; j < n; j++) {
             for (l = 0; l < k; l++) {
-                norm += pow(new_H[j][l] - H[j][l], 2);
+                f_norm += pow(new_H[j][l] - H[j][l], 2);
             }
         }
         /* Break on convergence*/
-        if (norm < 0.0001) {
+        if (f_norm < 0.0001) {
             free_2d_array(new_H, n);
             break;
         }
 
+        /*free_2d_array(H, n);*/
         H = new_H;
-        free_2d_array(new_H, n);
     }
 
     return H;
@@ -156,7 +159,7 @@ void print_2D_array(double **arr, int n, int m) {
     int i, j;
     for (i = 0; i < n; i++) {
         for (j = 0; j < m; j++) {
-            printf("%f ", arr[i][j]);
+            printf("%.4f ", arr[i][j]);
             if (j != m-1) printf(",");
         }
         printf("\n");

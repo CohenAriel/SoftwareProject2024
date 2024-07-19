@@ -9,11 +9,11 @@ goal = sys.argv[2]
 file_name = sys.argv[3]
 
 # Load the data in the file
-X = np.loadtxt(file_name, delimiter=',')
+X = np.loadtxt(file_name, delimiter=',').tolist()
 
 def print_matrix(matrix):
     for line in matrix:
-        print(*line, sep=', ')
+        print(*[f'{x:.4f}' for x in line], sep=',')
 
 # goal: Can get the following values:
 # i. symnmf: Perform full the symNMF as described in 1 and output H.
@@ -23,7 +23,7 @@ def print_matrix(matrix):
 
 if goal == 'symnmf':
     W = symnmfmodule.norm(X)
-    H = np.random.uniform(0, 2 * (np.mean(W)/k)^0.5, (len(X), k))
+    H = np.random.uniform(0, 2 * (np.mean(W)/k)**0.5, (len(X), k)).tolist()
     H = symnmfmodule.symnmf(H, W)
     print_matrix(H)
 elif goal == 'sym':
