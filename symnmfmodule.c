@@ -4,21 +4,21 @@
 # include <stdio.h>
 # include <stdlib.h>
 
-/*Extracts a 2D array from a Python object*/
-double **extract_2d_array(PyObject *PyX) {
+/*Extracts a 2D array from a Python object. Also sets n and m to dimensions*/
+double **extract_2d_array(PyObject *PyX, int *n, int *m) {
     double **X;
-    int n, d, i, j;
+    int i, j;
     PyObject *row, *element;
 
-    n = PyObject_Length(PyX);
-    d = PyObject_Length(PyList_GetItem(PyX, 0));
+    *n = PyObject_Length(PyX);
+    *m = PyObject_Length(PyList_GetItem(PyX, 0));
 
     /*Allocate memory for the 2D array*/
-    X = (double **) malloc(n * sizeof(double *));
-    for (i = 0; i < n; i++) {
-        X[i] = (double *) malloc(d * sizeof(double));
+    X = (double **) malloc(*n * sizeof(double *));
+    for (i = 0; i < *n; i++) {
+        X[i] = (double *) malloc(*m * sizeof(double));
         row = PyList_GetItem(PyX, i);
-        for (j = 0; j < d; j++){
+        for (j = 0; j < *m; j++){
             element = PyList_GetItem(row, j);
             /*Convert Python object to double*/
             X[i][j] = PyFloat_AsDouble(element);
@@ -27,29 +27,27 @@ double **extract_2d_array(PyObject *PyX) {
     return X;
 }
 
-/*Gets arguments and extracts 2D array*/
-double **get_arg(PyObject *args) {
+/*Gets arguments and extracts 2D array. Also sets n and m to dimensions*/
+double **get_arg(PyObject *args, int *n, int *m) {
     PyObject *PyX;
 
     if (!PyArg_ParseTuple(args, "O", &PyX)) {
         return NULL;
     }
 
-    return extract_2d_array(PyX);
+    return extract_2d_array(PyX, n, m);
 }
 
 /*Creates a Python 2D list from a 2D array*/
-PyObject *create_2d_list(double** arr) {
+PyObject *create_2d_list(double** arr, int n, int m) {
     PyObject *row;
     int  i, j;
-    int n = sizeof(arr) / sizeof(arr[0]);
-    int dim = sizeof(arr[0]) / sizeof(arr[0][0]);
     PyObject *PyOut = PyList_New(n);
 
     for (i = 0; i < n; i++) {
         row = PyList_New(n);
 
-        for (j = 0; j < dim; j++) {
+        for (j = 0; j < m; j++) {
             /*Convert double to Python object*/
             PyObject *elem = Py_BuildValue("d", arr[i][j]);
             PyList_SetItem(row, j, elem);
@@ -62,14 +60,15 @@ PyObject *create_2d_list(double** arr) {
 /* Python binding for sym function */
 static PyObject *sym_py(PyObject *self, PyObject *args) {
     /* Extract input arguments */
-    double **X = get_arg(args);
+    int n, d;
+    double **X = get_arg(args, &n, &d);
     /*Calculate sym matrix*/
-    double **A = sym(X);
+    double **A = sym(X, n, d);
     /*Convert result to Python object*/
-    PyObject *PyOut = create_2d_list(A);
+    PyObject *PyOut = create_2d_list(A, n, n);
     /*Free memory*/
-    free_2d_array(X);
-    free_2d_array(A);
+    free_2d_array(X, n);
+    free_2d_array(A, n);
 
     return PyOut;
 }
@@ -77,14 +76,17 @@ static PyObject *sym_py(PyObject *self, PyObject *args) {
 /*Python binding for ddg function*/
 static PyObject *ddg_py(PyObject *self, PyObject *args) {
     /*Extract input arguments*/
-    double **X = get_arg(args);
+    int n, d;
+    double **X = get_arg(args, &n, &d);
     /*Calculate ddg matrix*/
-    double **D = ddg(X);
+    double **A = sym(X, n, d);
+    double **D = ddg(A, n);
     /*Convert result to Python object*/
-    PyObject *PyOut = create_2d_list(D);
+    PyObject *PyOut = create_2d_list(D, n, n);
     /*Free memory*/
-    free_2d_array(X);
-    free_2d_array(D);
+    free_2d_array(X, n);
+    free_2d_array(A, n);
+    free_2d_array(D, n);
 
     return PyOut;
 }
@@ -92,14 +94,17 @@ static PyObject *ddg_py(PyObject *self, PyObject *args) {
 /*Python binding for norm function*/
 static PyObject *norm_py(PyObject *self, PyObject *args) {
     /*Extract input arguments*/
-    double **X = get_arg(args);
+    int n, d;
+    double **X = get_arg(args, &n, &d);
     /*Calculate norm matrix*/
-    double **W = norm(X);
+    double **A = sym(X, n, d);
+    double **W = norm(A, n);
     /*Convert result to Python object*/
-    PyObject *PyOut = create_2d_list(W);
+    PyObject *PyOut = create_2d_list(W, n, n);
     /*Free memory*/
-    free_2d_array(X);
-    free_2d_array(W);
+    free_2d_array(X, n);
+    free_2d_array(A, n);
+    free_2d_array(W, n);
 
     return PyOut;
 }
@@ -113,18 +118,19 @@ static PyObject *symnmf_py(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, "OO", &PyW, &PyH)) {
         return NULL;
     }
-    W = extract_2d_array(PyW);
-    H = extract_2d_array(PyH);
+    int n, d, k;
+    W = extract_2d_array(PyW, &n, &d);
+    H = extract_2d_array(PyH, &n, &k);
 
     /* Calculate symnmf */
-    H = symnmf(H, W);
+    H = symnmf(H, W, n, d);
 
     /* Convert result to Python object */
-    PyObject *PyOut = create_2d_list(H);
+    PyObject *PyOut = create_2d_list(H, n, d);
 
     /* Free memory */
-    free_2d_array(W);
-    free_2d_array(H);
+    free_2d_array(W, n);
+    free_2d_array(H, n);
 
     return PyOut;
 }
