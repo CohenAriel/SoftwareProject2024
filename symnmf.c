@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* Allocate memory for a 2D array */
 double **alloc_2d_array(int n, int d) {
     int i;
     double **arr = (double **)malloc(sizeof(double *) * n);
@@ -13,6 +14,7 @@ double **alloc_2d_array(int n, int d) {
     return arr;
 }
 
+/* Free memory for a 2D array */
 void free_2d_array(double **arr, int n) {
     int i;
     for (i = 0; i < n; i++) {
@@ -154,6 +156,7 @@ double **symnmf(double **H , double **W, int n, int k) {
     return H;
 }
 
+/* Print a 2D array */
 void print_2D_array(double **arr, int n, int m) {
     int i, j;
     for (i = 0; i < n; i++) {
@@ -165,6 +168,7 @@ void print_2D_array(double **arr, int n, int m) {
     }
 }
 
+/* Read the matrix from the file */
 double **get_matrix_from_file(char *filename, int *n, int *d) {
     FILE *file;
     char ch;
@@ -210,6 +214,7 @@ double **get_matrix_from_file(char *filename, int *n, int *d) {
     return X;
 }
 
+/* Main function */
 int main(int argc, char *argv[]){
     char *func;
     char *filename;
