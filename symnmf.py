@@ -9,7 +9,7 @@ goal = sys.argv[2]
 file_name = sys.argv[3]
 
 # Load the data in the file
-X = np.loadtxt(file_name, delimiter=',').tolist()
+X = np.loadtxt(file_name, delimiter=',', ndmin=2).tolist()
 
 def print_matrix(matrix):
     for line in matrix:

@@ -35,8 +35,8 @@ void matmul(double **A, double **B, double **C, int n, int m, int d) {
 }
 
 /* Calculate the Euclidean distance between two vectors */
-float distance(double* x , double* y , int n) {
-    float sum = 0;
+double distance(double* x , double* y , int n) {
+    double sum = 0;
     int i;
     for (i = 0; i < n; i++) {
         sum += pow(x[i] - y[i], 2);
@@ -107,7 +107,7 @@ double **symnmf(double **H , double **W, int n, int k) {
 
     for (i = 0; i < 300; i++) {
         double f_norm;
-        double** new_H = alloc_2d_array(n, k);
+        double **new_H = alloc_2d_array(n, k);
         double **numerators = alloc_2d_array(n, k);
         double **temp_denominators = alloc_2d_array(n, n); /*To calculate HH^T*/
         double **denominators = alloc_2d_array(n, k);
@@ -143,14 +143,12 @@ double **symnmf(double **H , double **W, int n, int k) {
                 f_norm += pow(new_H[j][l] - H[j][l], 2);
             }
         }
-        /* Break on convergence*/
-        if (f_norm < 0.0001) {
-            free_2d_array(new_H, n);
-            break;
-        }
 
         free_2d_array(H, n);
         H = new_H;
+
+        /* Break on convergence*/
+        if (f_norm < 0.0001) break;
     }
 
     return H;
@@ -206,6 +204,8 @@ double **get_matrix_from_file(char *filename, int *n, int *d) {
             break;
         }
     }
+
+    fclose(file);
 
     return X;
 }
